@@ -8,6 +8,9 @@ import (
 	"os/signal"
 	"context"
 	"escape-room-effects-server/api"
+	"log"
+
+	"gopkg.in/mgo.v2"
 )
 
 func main() {
@@ -17,8 +20,14 @@ func main() {
 func startServer() {
 	e := echo.New()
 
-	e.POST("/state", api.GameState)
-	e.POST("/answer", api.Answer)
+	session := setupDatabase()
+	defer session.Close()
+
+	server := api.Server{Db: session}
+
+	e.POST("/state", server.GameState)
+	e.POST("/answer", server.Answer)
+	e.POST("/command", server.Command)
 
 	// Start server
 	go func() {
@@ -40,4 +49,15 @@ func startServer() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
+}
+
+func setupDatabase() *mgo.Session {
+	appDbMasterSession, err := mgo.Dial("mongodb://localhost:3001/meteor")
+	if err != nil {
+		log.Fatal("Failed to dial appDbMasterSession: " + err.Error())
+	}
+
+	appDbMasterSession.SetMode(mgo.Monotonic, true)
+
+	return appDbMasterSession
 }

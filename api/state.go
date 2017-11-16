@@ -5,20 +5,48 @@ import (
 	"net/http"
 	"escape-room-effects-server/sound"
 	"escape-room-effects-server/piClient"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+)
+
+const (
+	Pending  = 0
+	Starting = 1
+	Running  = 2
+	Paused   = 3
+	Finished = 4
 )
 
 type GameStateRequest struct {
+	ID    string `json:"id"`
 	State string `json:"state"`
 }
 
 var randomEffectChannel chan bool
+var runningGameID string
 
-func GameState(ctx echo.Context) error {
+type GameState struct {
+	ID    string `bson:"_id"`
+	State int    `bson:"state"`
+}
+
+func (s Server) GameState(ctx echo.Context) error {
 	r := new(GameStateRequest)
 	if err := ctx.Bind(r); err != nil {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
 	}
 
+	runningGameID = getID(r)
+
+	db := s.getDb()
+	defer db.Close()
+
+	process(r, db)
+
+	return nil
+}
+
+func process(r *GameStateRequest, db *mgo.Session) {
 	switch r.State {
 	case "starting":
 		{
@@ -44,20 +72,12 @@ func GameState(ctx echo.Context) error {
 
 	case "pause":
 		{
-			StopRandomEffects()
-			piClient.LightsOff()
-			go func() {
-				sound.Play(sound.LightToggle)
-			}()
+			pauseGame(db)
 		}
 
 	case "resume":
 		{
-			piClient.WallLightsOnly()
-			startRandomEffects()
-			go func() {
-				sound.Play(sound.Unpause)
-			}()
+			resumeGame(db)
 		}
 
 	case "finish":
@@ -89,8 +109,53 @@ func GameState(ctx echo.Context) error {
 			piClient.GameRoomLightsOnly()
 		}
 	}
+}
 
-	return nil
+func getID(r *GameStateRequest) string {
+	if len(r.ID) > 0 {
+		return r.ID
+	}
+
+	return runningGameID
+}
+
+func resumeGame(db *mgo.Session) {
+	c := getGameCollection(db)
+	c.UpdateId(runningGameID, bson.M{"$set": bson.M{"state": Running}})
+
+	piClient.WallLightsOnly()
+	startRandomEffects()
+	go func() {
+		sound.Play(sound.Unpause)
+	}()
+}
+
+func pauseGame(db *mgo.Session) {
+	StopRandomEffects()
+
+	c := getGameCollection(db)
+	c.UpdateId(runningGameID, bson.M{"$set": bson.M{"state": Paused}, "$inc": bson.M{"timesPaused": 1}})
+
+	piClient.LightsOff()
+	go func() {
+		sound.Play(sound.LightToggle)
+	}()
+}
+
+func isGamePaused(db *mgo.Session) bool {
+	c := getGameCollection(db)
+
+	game := GameState{}
+
+	if err := c.FindId(runningGameID).
+		Select(bson.M{
+		"_id":   1,
+		"state": 1,
+	}).One(&game); err != nil {
+		return true
+	}
+
+	return game.State == Paused
 }
 
 func startRandomEffects() {
