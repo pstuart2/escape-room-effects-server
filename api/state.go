@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"net/http"
 	"escape-room-effects-server/sound"
+	"escape-room-effects-server/piClient"
 )
 
 type GameStateRequest struct {
@@ -21,6 +22,7 @@ func GameState(ctx echo.Context) error {
 	switch r.State {
 	case "starting":
 		{
+			piClient.LightsOff()
 			go func() {
 				//sound.Play(sound.LightToggle)
 				sound.Play(sound.DoorSlam)
@@ -30,6 +32,7 @@ func GameState(ctx echo.Context) error {
 
 	case "start":
 		{
+			piClient.WallLightsOnly()
 			startRandomEffects()
 			go func() {
 				sound.Play(sound.MusicLoop)
@@ -42,6 +45,7 @@ func GameState(ctx echo.Context) error {
 	case "pause":
 		{
 			StopRandomEffects()
+			piClient.LightsOff()
 			go func() {
 				sound.Play(sound.LightToggle)
 			}()
@@ -49,6 +53,7 @@ func GameState(ctx echo.Context) error {
 
 	case "resume":
 		{
+			piClient.WallLightsOnly()
 			startRandomEffects()
 			go func() {
 				sound.Play(sound.Unpause)
@@ -58,9 +63,30 @@ func GameState(ctx echo.Context) error {
 	case "finish":
 		{
 			StopRandomEffects()
+			piClient.LightsOn()
 			go func() {
 				sound.Play(sound.Clapping)
 			}()
+		}
+
+	case "lightsOn":
+		{
+			piClient.LightsOn()
+		}
+
+	case "lightsOff":
+		{
+			piClient.LightsOff()
+		}
+
+	case "wallLightsOnly":
+		{
+			piClient.WallLightsOnly()
+		}
+
+	case "gameRoomLightsOnly":
+		{
+			piClient.GameRoomLightsOnly()
 		}
 	}
 

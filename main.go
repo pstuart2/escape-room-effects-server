@@ -10,10 +10,6 @@ import (
 	"escape-room-effects-server/api"
 )
 
-const (
-	PiServer = "http://192.168.86.101:8080"
-)
-
 func main() {
 	startServer()
 }

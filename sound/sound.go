@@ -48,7 +48,7 @@ func Play(sound string) {
 	<-done
 }
 
-var effects = []string{BunnyGrowl, ChainDrag, CreeperExplosion, EnderDeath, Explosion, RandomDoorSlam}
+var effects = []string{BunnyGrowl, ChainDrag, CreeperExplosion, EnderDeath, Explosion, RandomDoorSlam, MusicLoop, UndergroundEffect}
 
 func StartRandomEffects() chan bool {
 	stop := make(chan bool)
@@ -56,15 +56,16 @@ func StartRandomEffects() chan bool {
 	go func() {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-		for {
+		shouldStop := false
+		for !shouldStop {
 
 			nextEffect := effects[r.Intn(len(effects))]
 			nextEffectTime := r.Intn(120) + 60
 			fmt.Printf("Next effect [%s] playing in [%d]\n", nextEffect, nextEffectTime)
 
 			select {
-			case <- stop:
-				break
+			case shouldStop = <- stop:
+				fmt.Println("Stopping effects")
 			case <-time.After(time.Second * time.Duration(nextEffectTime)):
 				Play(nextEffect)
 			}
