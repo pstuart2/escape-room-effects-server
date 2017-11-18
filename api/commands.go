@@ -6,6 +6,7 @@ import (
 	"escape-room-effects-server/piClient"
 	"fmt"
 	"gopkg.in/mgo.v2"
+	"strings"
 )
 
 type CommandRequest struct {
@@ -23,21 +24,18 @@ func (s Server) Command(ctx echo.Context) error {
 
 	fmt.Printf("Command [%s]\n", r.Command)
 
-	validCommand := false
 	if isGamePaused(db) {
-		validCommand = processPausedCommand(r, db)
-	} else {
-		validCommand = processCommand(r, db)
+		return processPausedCommand(ctx, r, db)
 	}
 
-	if !validCommand {
-		return ctx.JSON(http.StatusBadRequest, "invalid command")
-	}
-
-	return ctx.JSON(http.StatusOK, "OK")
+	return processCommand(ctx, r, db)
 }
 
-func processCommand(r *CommandRequest, db *mgo.Session) bool {
+func processCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
+	if strings.Contains(r.Command, "shutdown code") {
+		return processShutdownCommand(ctx, r, db)
+	}
+
 	switch r.Command {
 	case "lights on":
 		{
@@ -61,14 +59,14 @@ func processCommand(r *CommandRequest, db *mgo.Session) bool {
 
 	default:
 		{
-			return false
+			return ctx.JSON(http.StatusBadRequest, "invalid command")
 		}
 	}
 
-	return true
+	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func processPausedCommand(r *CommandRequest, db *mgo.Session) bool {
+func processPausedCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
 	switch r.Command {
 	case "resume game":
 		{
@@ -77,9 +75,21 @@ func processPausedCommand(r *CommandRequest, db *mgo.Session) bool {
 
 	default:
 		{
-			return false
+			return ctx.JSON(http.StatusBadRequest, "invalid command while paused")
 		}
 	}
 
-	return true
+	return ctx.JSON(http.StatusOK, "OK")
+}
+
+func processShutdownCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
+	shutdownCode := getShutdownCode(db)
+
+	if r.Command != "shutdown code " + shutdownCode {
+		playWrongAnswerSound()
+		return ctx.JSON(http.StatusNotAcceptable, "Invalid shutdown code!")
+	}
+
+	finishGame(db)
+	return ctx.JSON(http.StatusOK, "OK")
 }

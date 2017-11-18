@@ -26,12 +26,16 @@ func (s Server) Answer(ctx echo.Context) error {
 
 	case "wrong":
 		{
-			go func() {
-				sound.Play(sound.WrongAnswer)
-			}()
+			playWrongAnswerSound()
 		}
 
 	}
 
 	return nil
+}
+
+func playWrongAnswerSound() {
+	go func() {
+		sound.Play(sound.WrongAnswer)
+	}()
 }

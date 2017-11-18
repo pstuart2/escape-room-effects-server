@@ -25,11 +25,6 @@ type GameStateRequest struct {
 var randomEffectChannel chan bool
 var runningGameID string
 
-type GameState struct {
-	ID    string `bson:"_id"`
-	State int    `bson:"state"`
-}
-
 func (s Server) GameState(ctx echo.Context) error {
 	r := new(GameStateRequest)
 	if err := ctx.Bind(r); err != nil {
@@ -82,11 +77,7 @@ func process(r *GameStateRequest, db *mgo.Session) {
 
 	case "finish":
 		{
-			StopRandomEffects()
-			piClient.LightsOn()
-			go func() {
-				sound.Play(sound.Clapping)
-			}()
+			finishGame(db)
 		}
 
 	case "lightsOn":
@@ -142,20 +133,15 @@ func pauseGame(db *mgo.Session) {
 	}()
 }
 
-func isGamePaused(db *mgo.Session) bool {
+func finishGame(db *mgo.Session) {
 	c := getGameCollection(db)
+	c.UpdateId(runningGameID, bson.M{"$set": bson.M{"state": Finished}})
 
-	game := GameState{}
-
-	if err := c.FindId(runningGameID).
-		Select(bson.M{
-		"_id":   1,
-		"state": 1,
-	}).One(&game); err != nil {
-		return true
-	}
-
-	return game.State == Paused
+	StopRandomEffects()
+	piClient.LightsOn()
+	go func() {
+		sound.Play(sound.Clapping)
+	}()
 }
 
 func startRandomEffects() {
