@@ -1,14 +1,14 @@
 package piClient
 
 import (
-	"encoding/json"
-	"net/http"
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 const (
-	PiServer = "http://192.168.86.101:8080"
+	PiServer = "http://192.168.86.123:8080"
 )
 
 /*
@@ -20,7 +20,7 @@ const (
 	6 = Nothing
 	7 = Hall Lights
 	8 = Nothing
- */
+*/
 
 func LightsOn() {
 	post([]uint{0, 0, 1, 0, 1, 0, 1, 0})

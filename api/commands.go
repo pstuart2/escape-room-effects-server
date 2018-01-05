@@ -1,12 +1,14 @@
 package api
 
 import (
-	"github.com/labstack/echo"
-	"net/http"
 	"escape-room-effects-server/piClient"
 	"fmt"
-	"gopkg.in/mgo.v2"
+	"net/http"
 	"strings"
+
+	"github.com/labstack/echo"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type CommandRequest struct {
@@ -23,6 +25,9 @@ func (s Server) Command(ctx echo.Context) error {
 	defer db.Close()
 
 	fmt.Printf("Command [%s]\n", r.Command)
+
+	c := getGameCollection(db)
+	c.UpdateId(runningGameID, bson.M{"$push": bson.M{"commandsSent": bson.M{"command": r.Command}}})
 
 	if isGamePaused(db) {
 		return processPausedCommand(ctx, r, db)
@@ -85,7 +90,7 @@ func processPausedCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) 
 func processShutdownCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
 	shutdownCode := getShutdownCode(db)
 
-	if r.Command != "shutdown code " + shutdownCode {
+	if r.Command != "shutdown code "+shutdownCode {
 		playWrongAnswerSound()
 		return ctx.JSON(http.StatusNotAcceptable, "Invalid shutdown code!")
 	}
