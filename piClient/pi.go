@@ -18,7 +18,7 @@ const (
 	4 = Nothing
 	5 = Game Room Lights
 	6 = Nothing
-	7 = Hall Lights
+	7 = Nothing
 	8 = Nothing
 */
 

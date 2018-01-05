@@ -25,6 +25,7 @@ func startServer() {
 
 	server := api.Server{Db: session}
 
+	e.POST("/faces", server.Faces)
 	e.POST("/state", server.GameState)
 	e.POST("/answer", server.Answer)
 	e.POST("/command", server.Command)
