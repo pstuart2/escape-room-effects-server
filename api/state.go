@@ -31,7 +31,7 @@ func (s Server) GameState(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
 	}
 
-	runningGameID = getID(r)
+	runningGameID = getID(r.ID)
 
 	db := s.getDb()
 	defer db.Close()
@@ -102,9 +102,9 @@ func process(r *GameStateRequest, db *mgo.Session) {
 	}
 }
 
-func getID(r *GameStateRequest) string {
-	if len(r.ID) > 0 {
-		return r.ID
+func getID(id string) string {
+	if len(id) > 0 {
+		return id
 	}
 
 	return runningGameID

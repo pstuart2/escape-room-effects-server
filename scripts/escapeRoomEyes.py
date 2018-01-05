@@ -10,16 +10,19 @@ profile_face = cv.CascadeClassifier('models/haarcascade_profileface.xml')
 lastCount = 0
 
 
-def send_face_count(count):
+# TODO: Need to set the id when started
+
+def send_face_count(current_count, previous_count):
     """This sends the face count to the effects server"""
-    print("Sending: " + str(count))
-    r = requests.post("http://localhost:8080/faces", json={"count": count})
+    print("Sending: " + str(current_count))
+    r = requests.post("http://localhost:8080/faces",
+                      json={"_id": "eWpMRNLMxiDx47yqg", "previousCount": previous_count, "currentCount": current_count})
     print("Status: " + str(r.status_code))
     return
 
 
 # Initialize and test connection
-send_face_count(lastCount)
+send_face_count(lastCount, 0)
 
 while True:
     # Capture frame-by-frame
@@ -46,7 +49,7 @@ while True:
 
     if faceCount != lastCount:
         try:
-            send_face_count(faceCount)
+            send_face_count(faceCount, lastCount)
             lastCount = faceCount
         except:
             print("Failed to send!")

@@ -13,10 +13,16 @@ type Server struct {
 	Db *mgo.Session
 }
 
+type Eyes struct {
+	State    int `bson:"state"`
+	Interact int `bson:"interact"`
+}
+
 type GameState struct {
 	ID           string `bson:"_id"`
 	State        int    `bson:"state"`
 	ShutdownCode string `bson:"shutdownCode"`
+	Eyes         Eyes   `bson:"eyes"`
 }
 
 func (s Server) getDb() *mgo.Session {
@@ -47,6 +53,7 @@ func getGame(db *mgo.Session) *GameState {
 		"_id":          1,
 		"state":        1,
 		"shutdownCode": 1,
+		"eyes":         1,
 	}).One(&game); err != nil {
 		return nil
 	}
