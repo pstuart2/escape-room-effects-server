@@ -4,7 +4,7 @@ import cv2 as cv
 cap = cv.VideoCapture(0)
 
 # face_cascade = cv.CascadeClassifier('models/facial_recognition_model.xml')
-frontal_face = cv.CascadeClassifier('models/facial_recognition_model.xml')
+frontal_face = cv.CascadeClassifier('models/haarcascade_frontalface_default.xml')
 profile_face = cv.CascadeClassifier('models/haarcascade_profileface.xml')
 
 while True:
@@ -16,7 +16,7 @@ while True:
 
     # Find the faces in our image
     faces = frontal_face.detectMultiScale(gray,
-                                          scaleFactor=1.1,
+                                          scaleFactor=1.5,
                                           minNeighbors=5,
                                           minSize=(30, 30)
                                           )
@@ -25,7 +25,7 @@ while True:
         cv.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
     profiles = profile_face.detectMultiScale(gray,
-                                             scaleFactor=1.1,
+                                             scaleFactor=1.5,
                                              minNeighbors=5,
                                              minSize=(30, 30)
                                              )
