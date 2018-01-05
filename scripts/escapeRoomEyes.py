@@ -1,3 +1,4 @@
+import sys
 import cv2 as cv
 import requests
 from time import sleep
@@ -9,17 +10,23 @@ profile_face = cv.CascadeClassifier('models/haarcascade_profileface.xml')
 
 lastCount = 0
 
+game_id = "eWpMRNLMxiDx47yqg"
 
-# TODO: Need to set the id when started
 
 def send_face_count(current_count, previous_count):
     """This sends the face count to the effects server"""
     print("Sending: " + str(current_count))
     r = requests.post("http://localhost:8080/faces",
-                      json={"_id": "eWpMRNLMxiDx47yqg", "previousCount": previous_count, "currentCount": current_count})
+                      json={"_id": game_id, "previousCount": previous_count, "currentCount": current_count})
     print("Status: " + str(r.status_code))
     return
 
+
+if len(sys.argv) > 1:
+    game_id = sys.argv[1]
+    print("Game Id set to " + game_id)
+else:
+    print("Using default game_id")
 
 # Initialize and test connection
 send_face_count(lastCount, 0)
