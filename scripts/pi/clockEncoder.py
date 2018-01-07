@@ -1,5 +1,6 @@
 import sys
 import RPi.GPIO as GPIO
+import requests
 
 RoAPin = 17  # dt
 RoBPin = 18  # clk
@@ -13,14 +14,23 @@ Current_RoB_Status = 0
 
 
 def setup():
-    global RoAPin, RoBPin, EndPoint
+    global RoAPin, RoBPin, EndPoint, handPosition
     RoAPin = int(sys.argv[1])
     RoBPin = int(sys.argv[2])
     EndPoint = sys.argv[3]
 
+    sendHandPosition(handPosition)
+
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(RoAPin, GPIO.IN)
     GPIO.setup(RoBPin, GPIO.IN)
+
+
+def sendHandPosition(pos):
+    global EndPoint
+    print("Sending handPosition = %d" % pos)
+    r = requests.post(EndPoint, json={"pos": pos})
+    print("Status: " + str(r.status_code))
 
 
 def lockHandPosition(pos):
@@ -45,10 +55,10 @@ def rotaryDeal():
         flag = 0
         if (Last_RoB_Status == 0) and (Current_RoB_Status == 1):
             handPosition = lockHandPosition(handPosition + 1)
-            print('handPosition = %d' % handPosition)
+            sendHandPosition(handPosition)
         if (Last_RoB_Status == 1) and (Current_RoB_Status == 0):
             handPosition = lockHandPosition(handPosition - 1)
-            print('handPosition = %d' % handPosition)
+            sendHandPosition(handPosition)
 
 
 def loop():

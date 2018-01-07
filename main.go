@@ -29,6 +29,8 @@ func startServer() {
 	e.POST("/state", server.GameState)
 	e.POST("/answer", server.Answer)
 	e.POST("/command", server.Command)
+	e.POST("/hours", server.Hours)
+	e.POST("/minutes", server.Minutes)
 
 	// Start server
 	go func() {
