@@ -10,7 +10,7 @@ type AnswerRequest struct {
 	Result string `json:"result"`
 }
 
-func (s Server) Answer(ctx echo.Context) error {
+func (s *Server) Answer(ctx echo.Context) error {
 	r := new(AnswerRequest)
 	if err := ctx.Bind(r); err != nil {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})

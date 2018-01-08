@@ -3,6 +3,7 @@ package api
 import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 type ErrorResponse struct {
@@ -10,7 +11,9 @@ type ErrorResponse struct {
 }
 
 type Server struct {
-	Db *mgo.Session
+	Db     *mgo.Session
+	GameID string
+	Ticker *time.Ticker
 }
 
 type Eyes struct {
@@ -18,14 +21,25 @@ type Eyes struct {
 	Interact int `bson:"interact"`
 }
 
-type GameState struct {
-	ID           string `bson:"_id"`
-	State        int    `bson:"state"`
-	ShutdownCode string `bson:"shutdownCode"`
-	Eyes         Eyes   `bson:"eyes"`
+type GameClock struct {
+	Hour int `bson:"hour"`
+	Min  int `bson:"min"`
 }
 
-func (s Server) getDb() *mgo.Session {
+type GameTime struct {
+	Current time.Time `bson:"current"`
+	Clock   GameClock `bson:"clock"`
+}
+
+type GameState struct {
+	ID           string   `bson:"_id"`
+	State        int      `bson:"state"`
+	ShutdownCode string   `bson:"shutdownCode"`
+	Eyes         Eyes     `bson:"eyes"`
+	Time         GameTime `bson:"time"`
+}
+
+func (s *Server) getDb() *mgo.Session {
 	return s.Db.Copy()
 }
 
@@ -33,27 +47,28 @@ func getGameCollection(db *mgo.Session) *mgo.Collection {
 	return db.DB("").C("game")
 }
 
-func isGamePaused(db *mgo.Session) bool {
-	game := getGame(db)
+func (s *Server) isGamePaused(db *mgo.Session) bool {
+	game := s.getGame(db)
 	return game.State == Paused
 }
 
-func getShutdownCode(db *mgo.Session) string {
-	game := getGame(db)
+func (s *Server) getShutdownCode(db *mgo.Session) string {
+	game := s.getGame(db)
 	return game.ShutdownCode
 }
 
-func getGame(db *mgo.Session) *GameState {
+func (s *Server) getGame(db *mgo.Session) *GameState {
 	c := getGameCollection(db)
 
 	game := GameState{}
 
-	if err := c.FindId(runningGameID).
+	if err := c.FindId(s.GameID).
 		Select(bson.M{
 		"_id":          1,
 		"state":        1,
 		"shutdownCode": 1,
 		"eyes":         1,
+		"time":         1,
 	}).One(&game); err != nil {
 		return nil
 	}

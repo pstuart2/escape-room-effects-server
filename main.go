@@ -25,6 +25,11 @@ func startServer() {
 
 	server := api.Server{Db: session}
 
+	if len(os.Args) > 1 {
+		server.GameID = os.Args[1]
+		log.Printf("Setting GameID: %s", server.GameID)
+	}
+
 	e.POST("/faces", server.Faces)
 	e.POST("/state", server.GameState)
 	e.POST("/answer", server.Answer)
@@ -39,12 +44,15 @@ func startServer() {
 		}
 	}()
 
+	server.StartTicker()
+
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 10 seconds.
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 
+	server.StopTicker()
 	api.StopRandomEffects()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

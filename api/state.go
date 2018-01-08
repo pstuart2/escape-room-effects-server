@@ -23,28 +23,28 @@ type GameStateRequest struct {
 }
 
 var randomEffectChannel chan bool
-var runningGameID string
 
-func (s Server) GameState(ctx echo.Context) error {
+func (s *Server) GameState(ctx echo.Context) error {
 	r := new(GameStateRequest)
 	if err := ctx.Bind(r); err != nil {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
 	}
 
-	runningGameID = getID(r.ID)
-
 	db := s.getDb()
 	defer db.Close()
 
-	process(r, db)
+	process(s, r, db)
 
 	return nil
 }
 
-func process(r *GameStateRequest, db *mgo.Session) {
+func process(s *Server, r *GameStateRequest, db *mgo.Session) {
 	switch r.State {
 	case "starting":
 		{
+			s.GameID = r.ID
+			s.StartTicker()
+
 			piClient.LightsOff()
 			go func() {
 				//sound.Play(sound.LightToggle)
@@ -67,17 +67,17 @@ func process(r *GameStateRequest, db *mgo.Session) {
 
 	case "pause":
 		{
-			pauseGame(db)
+			s.pauseGame(db)
 		}
 
 	case "resume":
 		{
-			resumeGame(db)
+			s.resumeGame(db)
 		}
 
 	case "finish":
 		{
-			finishGame(db)
+			s.finishGame(db)
 		}
 
 	case "lightsOn":
@@ -102,17 +102,10 @@ func process(r *GameStateRequest, db *mgo.Session) {
 	}
 }
 
-func getID(id string) string {
-	if len(id) > 0 {
-		return id
-	}
-
-	return runningGameID
-}
-
-func resumeGame(db *mgo.Session) {
+func (s *Server) resumeGame(db *mgo.Session) {
+	s.StartTicker()
 	c := getGameCollection(db)
-	c.UpdateId(runningGameID, bson.M{"$set": bson.M{"state": Running}})
+	c.UpdateId(s.GameID, bson.M{"$set": bson.M{"state": Running}})
 
 	piClient.WallLightsOnly()
 	startRandomEffects()
@@ -121,11 +114,12 @@ func resumeGame(db *mgo.Session) {
 	}()
 }
 
-func pauseGame(db *mgo.Session) {
+func (s *Server) pauseGame(db *mgo.Session) {
+	s.StopTicker()
 	StopRandomEffects()
 
 	c := getGameCollection(db)
-	c.UpdateId(runningGameID, bson.M{"$set": bson.M{"state": Paused}, "$inc": bson.M{"timesPaused": 1}})
+	c.UpdateId(s.GameID, bson.M{"$set": bson.M{"state": Paused}, "$inc": bson.M{"timesPaused": 1}})
 
 	piClient.LightsOff()
 	go func() {
@@ -133,9 +127,10 @@ func pauseGame(db *mgo.Session) {
 	}()
 }
 
-func finishGame(db *mgo.Session) {
+func (s *Server) finishGame(db *mgo.Session) {
+	s.StopTicker()
 	c := getGameCollection(db)
-	c.UpdateId(runningGameID, bson.M{"$set": bson.M{"state": Finished}})
+	c.UpdateId(s.GameID, bson.M{"$set": bson.M{"state": Finished}})
 
 	StopRandomEffects()
 	piClient.LightsOn()

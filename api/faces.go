@@ -20,28 +20,26 @@ const (
 	Found   = 3
 )
 
-func (s Server) Faces(ctx echo.Context) error {
+func (s *Server) Faces(ctx echo.Context) error {
 	r := new(FaceUpdateRequest)
 	if err := ctx.Bind(r); err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	runningGameID = getID(r.ID)
-
 	db := s.getDb()
 	defer db.Close()
 
-	game := getGame(db)
+	game := s.getGame(db)
 
 	if game.Eyes.Interact != Found {
 		c := getGameCollection(db)
 
 		if r.CurrentCount == 0 && game.Eyes.Interact == Hiding {
 			log.Print("Setting Waiting")
-			c.UpdateId(runningGameID, bson.M{"$set": bson.M{"eyes.interact": Waiting}})
+			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"eyes.interact": Waiting}})
 		} else if game.Eyes.Interact != Hiding {
 			log.Print("Setting Hiding")
-			c.UpdateId(runningGameID, bson.M{"$set": bson.M{"eyes.interact": Hiding}})
+			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"eyes.interact": Hiding}})
 		}
 	}
 

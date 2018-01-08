@@ -15,7 +15,8 @@ type CommandRequest struct {
 	Command string `json:"command"`
 }
 
-func (s Server) Command(ctx echo.Context) error {
+// Command Processes commands from the game
+func (s *Server) Command(ctx echo.Context) error {
 	r := new(CommandRequest)
 	if err := ctx.Bind(r); err != nil {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
@@ -27,18 +28,18 @@ func (s Server) Command(ctx echo.Context) error {
 	fmt.Printf("Command [%s]\n", r.Command)
 
 	c := getGameCollection(db)
-	c.UpdateId(runningGameID, bson.M{"$push": bson.M{"commandsSent": bson.M{"command": r.Command}}})
+	c.UpdateId(s.GameID, bson.M{"$push": bson.M{"commandsSent": bson.M{"command": r.Command}}})
 
-	if isGamePaused(db) {
-		return processPausedCommand(ctx, r, db)
+	if s.isGamePaused(db) {
+		return processPausedCommand(s, ctx, r, db)
 	}
 
-	return processCommand(ctx, r, db)
+	return processCommand(s, ctx, r, db)
 }
 
-func processCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
+func processCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
 	if strings.Contains(r.Command, "shutdown code") {
-		return processShutdownCommand(ctx, r, db)
+		return processShutdownCommand(s, ctx, r, db)
 	}
 
 	switch r.Command {
@@ -59,7 +60,7 @@ func processCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error 
 
 	case "pause game":
 		{
-			pauseGame(db)
+			s.pauseGame(db)
 		}
 
 	default:
@@ -71,11 +72,11 @@ func processCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error 
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func processPausedCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
+func processPausedCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
 	switch r.Command {
 	case "resume game":
 		{
-			resumeGame(db)
+			s.resumeGame(db)
 		}
 
 	default:
@@ -87,14 +88,14 @@ func processPausedCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) 
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func processShutdownCommand(ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
-	shutdownCode := getShutdownCode(db)
+func processShutdownCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
+	shutdownCode := s.getShutdownCode(db)
 
 	if r.Command != "shutdown code "+shutdownCode {
 		playWrongAnswerSound()
 		return ctx.JSON(http.StatusNotAcceptable, "Invalid shutdown code!")
 	}
 
-	finishGame(db)
+	s.finishGame(db)
 	return ctx.JSON(http.StatusOK, "OK")
 }
