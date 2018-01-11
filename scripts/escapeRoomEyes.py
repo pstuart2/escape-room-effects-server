@@ -13,11 +13,11 @@ profile_face = cv.CascadeClassifier('models/haarcascade_profileface.xml')
 class EscapeRoomEyes(object):
     def __init__(self, args):
         if len(args) > 1:
-            self.game_id = args[1]
+            self.server = args[1]
         else:
-            self.game_id = "eWpMRNLMxiDx47yqg"
+            self.server = "http://localhost:8080"
 
-        print("Game Id set to " + self.game_id)
+        print("Server set to " + self.server)
 
         self.lastCount = 0
         self.sleepTime = 0.25
@@ -84,7 +84,7 @@ class EscapeRoomEyes(object):
         """This sends the face count to the effects server"""
 
         print("Sending: " + str(current_count))
-        r = requests.post("http://localhost:8080/faces",
+        r = requests.post(self.server + "/faces",
                           json={
                               "previousCount": previous_count,
                               "currentCount": current_count
@@ -95,9 +95,9 @@ class EscapeRoomEyes(object):
         """This sends the speech to the effects server for processing"""
         print("Sending speech: " + speech)
 
-        r = requests.post("http://localhost:8080/command",
+        r = requests.post(self.server + "/command",
                           json={
-                              "command": speech,
+                              "command": speech.lower(),
                           })
         print("Status: " + str(r.status_code))
 
