@@ -79,6 +79,8 @@ func (s *Server) StartTicker() {
 
 		lightsOn := -1  // Not yet set
 
+		// TODO: Setup pi Zero for the lights server
+
 		for range s.Ticker.C {
 			// Check clock against time
 			if isClockSetAheadByNoMoreThan5Min(s, db) {

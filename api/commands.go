@@ -38,7 +38,7 @@ func (s *Server) Command(ctx echo.Context) error {
 }
 
 func processCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
-	if strings.Contains(r.Command, "shutdown code") {
+	if strings.Contains(r.Command, "your name is") {
 		return processShutdownCommand(s, ctx, r, db)
 	}
 
@@ -65,7 +65,7 @@ func processCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Sess
 
 	default:
 		{
-			return ctx.JSON(http.StatusBadRequest, "invalid command")
+			fmt.Println("Invalid command")
 		}
 	}
 
@@ -91,7 +91,7 @@ func processPausedCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mg
 func processShutdownCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
 	shutdownCode := s.getShutdownCode(db)
 
-	if r.Command != "shutdown code "+shutdownCode {
+	if !strings.Contains(r.Command, shutdownCode) {
 		playWrongAnswerSound()
 		return ctx.JSON(http.StatusNotAcceptable, "Invalid shutdown code!")
 	}

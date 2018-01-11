@@ -3,3 +3,5 @@ sounds/
 vendor/
 
 scripts/\.idea/workspace\.xml
+
+scripts/__pycache__/

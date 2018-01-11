@@ -44,7 +44,7 @@ func startServer() {
 		}
 	}()
 
-	server.StartTicker()
+	//server.StartTicker()
 
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 10 seconds.

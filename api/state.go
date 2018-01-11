@@ -7,6 +7,7 @@ import (
 	"escape-room-effects-server/piClient"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"fmt"
 )
 
 const (
@@ -40,6 +41,11 @@ func (s *Server) GameState(ctx echo.Context) error {
 
 func process(s *Server, r *GameStateRequest, db *mgo.Session) {
 	switch r.State {
+	case "setGameId":
+		{
+			s.GameID = r.ID
+			fmt.Printf("GameId set to: %s\n", s.GameID)
+		}
 	case "starting":
 		{
 			s.GameID = r.ID

@@ -8,7 +8,6 @@ import (
 )
 
 type FaceUpdateRequest struct {
-	ID            string `json:"_id"`
 	PreviousCount int    `json:"previousCount"`
 	CurrentCount  int    `json:"currentCount"`
 }

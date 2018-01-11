@@ -21,7 +21,7 @@ class EscapeRoomEyes(object):
 
         self.lastCount = 0
         self.sleepTime = 0.25
-        self.speech = Speech(launch_phrase="hey you", debugger_enabled=False)
+        self.speech = Speech()
 
     def start(self):
         """Main loop"""
@@ -30,6 +30,7 @@ class EscapeRoomEyes(object):
         self.send_face_count(self.lastCount, 0)
 
         while True:
+            print("-----------------------------------")
             # Capture frame-by-frame
             ret, frame = cap.read()
 
@@ -50,9 +51,9 @@ class EscapeRoomEyes(object):
                                                      )
 
             face_count = len(faces) + len(profiles)
-            print('Faces:: last: ' + str(self.lastCount) + ' current: ' + str(face_count))
 
             if face_count != self.lastCount:
+                print('Faces:: last: ' + str(self.lastCount) + ' current: ' + str(face_count))
                 try:
                     self.send_face_count(face_count, self.lastCount)
                     self.lastCount = face_count
@@ -77,7 +78,7 @@ class EscapeRoomEyes(object):
             speech = self.speech.google_speech_recognition(recognizer, audio)
 
             if speech is not None:
-                print("Speech: " + speech)
+                self.send_speech(speech)
 
     def send_face_count(self, current_count, previous_count):
         """This sends the face count to the effects server"""
@@ -85,12 +86,20 @@ class EscapeRoomEyes(object):
         print("Sending: " + str(current_count))
         r = requests.post("http://localhost:8080/faces",
                           json={
-                              "_id": self.game_id,
                               "previousCount": previous_count,
                               "currentCount": current_count
                           })
         print("Status: " + str(r.status_code))
-        return
+
+    def send_speech(self, speech):
+        """This sends the speech to the effects server for processing"""
+        print("Sending speech: " + speech)
+
+        r = requests.post("http://localhost:8080/command",
+                          json={
+                              "command": speech,
+                          })
+        print("Status: " + str(r.status_code))
 
 
 if __name__ == "__main__":

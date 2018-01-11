@@ -4,6 +4,8 @@ http://milq.github.io/install-opencv-ubuntu-debian/
 # Install audio
 ```
 sudo apt-get install python-pyaudio python3-pyaudio
+sudo -H pip uninstall PyAudio
+sudo -H pip install PyAudio
 sudo -H pip install SpeechRecognition
 ```
 
