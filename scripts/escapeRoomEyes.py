@@ -2,6 +2,7 @@ import sys
 import cv2 as cv
 import requests
 from time import sleep
+from speech import Speech
 
 cap = cv.VideoCapture(0)
 
@@ -20,6 +21,7 @@ class EscapeRoomEyes(object):
 
         self.lastCount = 0
         self.sleepTime = 0.25
+        self.speech = Speech(launch_phrase="hey you", debugger_enabled=False)
 
     def start(self):
         """Main loop"""
@@ -57,7 +59,25 @@ class EscapeRoomEyes(object):
                 except:
                     print("Failed to send!")
 
-            sleep(self.sleepTime)
+            if face_count == 0:
+                sleep(self.sleepTime)
+                continue
+
+            # recognizer, audio = self.speech.listen_for_audio(1)
+            # if self.speech.is_call_to_action(recognizer, audio):
+            self.get_speech()
+
+    def get_speech(self):
+        print("Ready to listen for speech...")
+        recognizer, audio = self.speech.listen_for_audio(3)
+
+        if audio is not None:
+            # received audio data, now we'll recognize it using Google Speech Recognition
+            print("Getting speech...")
+            speech = self.speech.google_speech_recognition(recognizer, audio)
+
+            if speech is not None:
+                print("Speech: " + speech)
 
     def send_face_count(self, current_count, previous_count):
         """This sends the face count to the effects server"""
@@ -75,8 +95,10 @@ class EscapeRoomEyes(object):
 
 if __name__ == "__main__":
     bot = EscapeRoomEyes(sys.argv)
-    bot.start()
 
-    # Release when done
-    cap.release()
-    cv.destroyAllWindows()
+    try:
+        bot.start()
+    except KeyboardInterrupt:
+        # Release when done
+        cap.release()
+        cv.destroyAllWindows()
