@@ -1,7 +1,6 @@
 package api
 
 import (
-	"escape-room-effects-server/piClient"
 	"fmt"
 	"net/http"
 	"strings"
@@ -31,58 +30,20 @@ func (s *Server) Command(ctx echo.Context) error {
 	c.UpdateId(s.GameID, bson.M{"$push": bson.M{"commandsSent": bson.M{"command": r.Command}}})
 
 	if s.isGamePaused(db) {
-		return processPausedCommand(s, ctx, r, db)
+		return ctx.JSON(http.StatusOK, "OK")
 	}
 
 	return processCommand(s, ctx, r, db)
 }
 
 func processCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
-	if strings.Contains(r.Command, "your name is") {
+	if strings.Contains(r.Command, "your name is") || strings.Contains(r.Command, "you are") {
+		// TODO: These are invalid commands until they have me come out
 		return processShutdownCommand(s, ctx, r, db)
-	}
-
-	switch r.Command {
-	case "lights on":
-		{
-			piClient.GameRoomLightsOnly()
-		}
-
-	case "lights off":
-		{
-			piClient.LightsOff()
-		}
-
-	case "secret light":
-		{
-			piClient.SecretLight()
-		}
-
-	case "pause game":
-		{
-			s.pauseGame(db)
-		}
-
-	default:
-		{
-			fmt.Println("Invalid command")
-		}
-	}
-
-	return ctx.JSON(http.StatusOK, "OK")
-}
-
-func processPausedCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
-	switch r.Command {
-	case "resume game":
-		{
-			s.resumeGame(db)
-		}
-
-	default:
-		{
-			return ctx.JSON(http.StatusBadRequest, "invalid command while paused")
-		}
+	} else if strings.Contains(r.Command, "do not be afraid") {
+		// TODO: Handle
+	} else {
+		fmt.Println("Invalid command")
 	}
 
 	return ctx.JSON(http.StatusOK, "OK")
@@ -91,11 +52,11 @@ func processPausedCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mg
 func processShutdownCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
 	shutdownCode := s.getShutdownCode(db)
 
-	if !strings.Contains(r.Command, shutdownCode) {
+	if strings.Contains(r.Command, shutdownCode) {
+		s.finishGame(db)
+	} else {
 		playWrongAnswerSound()
-		return ctx.JSON(http.StatusNotAcceptable, "Invalid shutdown code!")
 	}
 
-	s.finishGame(db)
 	return ctx.JSON(http.StatusOK, "OK")
 }
