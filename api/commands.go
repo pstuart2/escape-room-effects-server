@@ -10,6 +10,14 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+const (
+	None      = 0
+	Listening = 1
+	Fetching  = 2
+	Success   = 3
+	Failed    = 4
+)
+
 type CommandRequest struct {
 	Command string `json:"command"`
 	Text    string `json:"text"`
@@ -38,36 +46,58 @@ func (s *Server) Command(ctx echo.Context) error {
 		return processAppCommands(s, ctx, r, db)
 	}
 
-	return processCommand(s, ctx, r, db)
+	return processSpokenCommand(s, ctx, r, db)
 }
 
 func processAppCommands(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
+	c := getGameCollection(db)
+
 	switch r.Command {
 	case ":listening":
 		{
-
+			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"camera.listeningState": Listening}})
 		}
 
 	case ":getting-speech":
 		{
-
+			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"camera.listeningState": Fetching}})
 		}
 
 	case ":speech":
 		{
+			c.UpdateId(s.GameID, bson.M{
+				"$set": bson.M{
+					"camera": bson.M{"listeningState": Success},
+					"say":    r.Text,
+				},
+				"$push": bson.M{"recordings": r.Text}},
+			)
 
+			return processSpokenCommand(s, ctx, r, db)
 		}
 
 	case ":stopped":
 		{
-
+			// no-audio, could-not-translate, api-error, api-timeout
+			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"camera.listeningState": None, "say": getSayText(r.Text)}})
 		}
 	}
 
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func processCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
+func getSayText(text string) string {
+	switch text {
+	case "no-audio":
+		return ""
+	case "could-not-translate":
+		return "I did not understand. Please speak loud and clear."
+	}
+
+	return "Something went wrong, please try again."
+}
+
+func processSpokenCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
 	if strings.Contains(r.Command, "your name is") || strings.Contains(r.Command, "you are") {
 		// TODO: These are invalid commands until they have me come out
 		return processShutdownCommand(s, ctx, r, db)

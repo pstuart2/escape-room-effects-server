@@ -75,12 +75,16 @@ class EscapeRoomEyes(object):
         if audio is not None:
             # received audio data, now we'll recognize it using Google Speech Recognition
             self.send_command(":getting-speech")
-            speech = self.speech.google_speech_recognition(recognizer, audio)
+            speech, reason = self.speech.google_speech_recognition(recognizer, audio)
 
             if speech is not None:
                 self.send_command(":speech", speech)
+                # Sleep so the speech has time to be read on the screen.
+                sleep(10)
+            else:
+                self.send_command(":stopped", reason)
         else:
-            self.send_command(":stopped")
+            self.send_command(":stopped", "no-audio")
 
     def send_face_count(self, current_count, previous_count):
         """This sends the face count to the effects server"""

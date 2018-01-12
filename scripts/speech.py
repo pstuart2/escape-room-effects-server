@@ -14,16 +14,21 @@ class Speech(object):
 
     def google_speech_recognition(self, recognizer, audio):
         speech = None
+        reason = None
+
         try:
             speech = recognizer.recognize_google(audio)
         except sr.UnknownValueError:
             print("Google Speech Recognition could not understand audio")
+            reason = "could-not-translate"
         except sr.RequestError as e:
             print("Could not request results from Google Speech Recognition service; {0}".format(e))
+            reason = "api-error"
         except:
             print("Google Speech timed out")
+            reason = "api-timeout"
 
-        return speech
+        return speech, reason
 
     def listen_for_audio(self, timeout):
         # obtain audio from the microphone
