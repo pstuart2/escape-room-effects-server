@@ -12,6 +12,7 @@ import (
 
 type CommandRequest struct {
 	Command string `json:"command"`
+	Text    string `json:"text"`
 }
 
 // Command Processes commands from the game
@@ -33,7 +34,37 @@ func (s *Server) Command(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, "OK")
 	}
 
+	if strings.HasPrefix(r.Command, ":") {
+		return processAppCommands(s, ctx, r, db)
+	}
+
 	return processCommand(s, ctx, r, db)
+}
+
+func processAppCommands(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
+	switch r.Command {
+	case ":listening":
+		{
+
+		}
+
+	case ":getting-speech":
+		{
+
+		}
+
+	case ":speech":
+		{
+
+		}
+
+	case ":stopped":
+		{
+
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, "OK")
 }
 
 func processCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {

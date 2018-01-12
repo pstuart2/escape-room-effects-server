@@ -16,7 +16,6 @@ class Speech(object):
         speech = None
         try:
             speech = recognizer.recognize_google(audio)
-            print("Google Speech Recognition thinks you said " + speech)
         except sr.UnknownValueError:
             print("Google Speech Recognition could not understand audio")
         except sr.RequestError as e:

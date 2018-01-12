@@ -69,16 +69,18 @@ class EscapeRoomEyes(object):
             self.get_speech()
 
     def get_speech(self):
-        print("Ready to listen for speech...")
+        self.send_command(":listening")
         recognizer, audio = self.speech.listen_for_audio(3)
 
         if audio is not None:
             # received audio data, now we'll recognize it using Google Speech Recognition
-            print("Getting speech...")
+            self.send_command(":getting-speech")
             speech = self.speech.google_speech_recognition(recognizer, audio)
 
             if speech is not None:
-                self.send_speech(speech)
+                self.send_command(":speech", speech)
+        else:
+            self.send_command(":stopped")
 
     def send_face_count(self, current_count, previous_count):
         """This sends the face count to the effects server"""
@@ -91,13 +93,14 @@ class EscapeRoomEyes(object):
                           })
         print("Status: " + str(r.status_code))
 
-    def send_speech(self, speech):
+    def send_command(self, command, text = ""):
         """This sends the speech to the effects server for processing"""
-        print("Sending speech: " + speech)
+        print("Sending command: " + command)
 
         r = requests.post(self.server + "/command",
                           json={
-                              "command": speech.lower(),
+                              "command": command,
+                              "text": text.lower(),
                           })
         print("Status: " + str(r.status_code))
 
