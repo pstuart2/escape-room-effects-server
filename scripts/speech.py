@@ -9,7 +9,8 @@ class Speech(object):
         self.r.pause_threshold = 0.8
         self.r.phrase_time_limit = 8
         self.r.operation_timeout = 10
-        self.r.dynamic_energy_threshold = True
+        self.r.energy_threshold = 4000
+        #self.r.dynamic_energy_threshold = True
         # self.r.dynamic_energy_adjustment_ratio = 1.25
 
     def google_speech_recognition(self, recognizer, audio):
@@ -38,7 +39,7 @@ class Speech(object):
 
             try:
                 print("I'm listening")
-                audio = self.r.listen(source, timeout=timeout, phrase_time_limit=10)
+                audio = self.r.listen(source, timeout=timeout, phrase_time_limit=5)
             except sr.WaitTimeoutError:
                 print("Timed out.")
                 return None, None

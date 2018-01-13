@@ -31,12 +31,21 @@ type GameTime struct {
 	Clock   GameClock `bson:"clock"`
 }
 
+type Question struct {
+	Query    string `bson:"question"`
+	Answer   string `bson:"answer"`
+	Reward   string `bson:"reward"`
+	Asked    bool   `bson:"asked"`
+	Answered bool   `bson:"answered"`
+}
+
 type GameState struct {
-	ID           string   `bson:"_id"`
-	State        int      `bson:"state"`
-	ShutdownCode string   `bson:"shutdownCode"`
-	Eyes         Eyes     `bson:"eyes"`
-	Time         GameTime `bson:"time"`
+	ID           string     `bson:"_id"`
+	State        int        `bson:"state"`
+	ShutdownCode string     `bson:"shutdownCode"`
+	Eyes         Eyes       `bson:"eyes"`
+	Time         GameTime   `bson:"time"`
+	Questions    []Question `bson:"questions"`
 }
 
 func (s *Server) getDb() *mgo.Session {
@@ -69,6 +78,7 @@ func (s *Server) getGame(db *mgo.Session) *GameState {
 		"shutdownCode": 1,
 		"eyes":         1,
 		"time":         1,
+		"questions":    1,
 	}).One(&game); err != nil {
 		return nil
 	}
