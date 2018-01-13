@@ -52,12 +52,12 @@ func processAppCommands(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.
 	switch r.Command {
 	case ":listening":
 		{
-			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"camera.listeningState": Listening}})
+			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"camera": bson.M{"listeningState": Listening, "text": "Listening..."}}})
 		}
 
 	case ":getting-speech":
 		{
-			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"camera.listeningState": Fetching}})
+			c.UpdateId(s.GameID, bson.M{"$set": bson.M{"camera": bson.M{"listeningState": Fetching, "text": "Decoding..."}}})
 		}
 
 	case ":speech":

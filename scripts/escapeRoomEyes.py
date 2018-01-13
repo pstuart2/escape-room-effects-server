@@ -1,7 +1,10 @@
 import sys
+import threading
+from time import sleep
+
 import cv2 as cv
 import requests
-from time import sleep
+
 from speech import Speech
 
 cap = cv.VideoCapture(0)
@@ -9,63 +12,63 @@ cap = cv.VideoCapture(0)
 frontal_face = cv.CascadeClassifier('models/haarcascade_frontalface_default.xml')
 profile_face = cv.CascadeClassifier('models/haarcascade_profileface.xml')
 
+server = "http://localhost:8080"
+face_count = 0
+
+
+def count_faces():
+    global face_count
+    last_count = 0
+
+    while True:
+        ret, frame = cap.read()
+
+        # Our operations on the frame come here
+        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+
+        # Find the faces in our image
+        faces = frontal_face.detectMultiScale(gray,
+                                              scaleFactor=1.5,
+                                              minNeighbors=5,
+                                              minSize=(30, 30)
+                                              )
+
+        face_count = len(faces)
+
+        if face_count != last_count:
+            print('Faces:: last: ' + str(last_count) + ' current: ' + str(face_count))
+            try:
+                send_face_count(face_count, last_count)
+                last_count = face_count
+            except:
+                print("Failed to send!")
+
+
+def send_face_count(current_count, previous_count):
+    """This sends the face count to the effects server"""
+
+    print("Sending: " + str(current_count))
+    r = requests.post(server + "/faces",
+                      json={
+                          "previousCount": previous_count,
+                          "currentCount": current_count
+                      })
+    if r.status_code != 200:
+        print("send_face_count Status: " + str(r.status_code))
+
 
 class EscapeRoomEyes(object):
-    def __init__(self, args):
-        if len(args) > 1:
-            self.server = args[1]
-        else:
-            self.server = "http://localhost:8080"
-
-        print("Server set to " + self.server)
-
-        self.lastCount = 0
-        self.sleepTime = 0.25
+    def __init__(self):
         self.speech = Speech()
 
     def start(self):
         """Main loop"""
 
-        # Initialize and test connection
-        self.send_face_count(self.lastCount, 0)
-
         while True:
-            #print("-----------------------------------")
-            # Capture frame-by-frame
-            ret, frame = cap.read()
-
-            # Our operations on the frame come here
-            gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-
-            # Find the faces in our image
-            faces = frontal_face.detectMultiScale(gray,
-                                                  scaleFactor=1.5,
-                                                  minNeighbors=5,
-                                                  minSize=(30, 30)
-                                                  )
-
-            profiles = profile_face.detectMultiScale(gray,
-                                                     scaleFactor=1.5,
-                                                     minNeighbors=5,
-                                                     minSize=(30, 30)
-                                                     )
-
-            face_count = len(faces) + len(profiles)
-
-            if face_count != self.lastCount:
-                print('Faces:: last: ' + str(self.lastCount) + ' current: ' + str(face_count))
-                try:
-                    self.send_face_count(face_count, self.lastCount)
-                    self.lastCount = face_count
-                except:
-                    print("Failed to send!")
-
             if face_count == 0:
-                sleep(self.sleepTime)
+                sleep(0.25)
                 continue
 
-            # recognizer, audio = self.speech.listen_for_audio(1)
-            # if self.speech.is_call_to_action(recognizer, audio):
             self.get_speech()
 
     def get_speech(self):
@@ -86,23 +89,11 @@ class EscapeRoomEyes(object):
         else:
             self.send_command(":stopped", "no-audio")
 
-    def send_face_count(self, current_count, previous_count):
-        """This sends the face count to the effects server"""
-
-        print("Sending: " + str(current_count))
-        r = requests.post(self.server + "/faces",
-                          json={
-                              "previousCount": previous_count,
-                              "currentCount": current_count
-                          })
-        if r.status_code != 200:
-            print("send_face_count Status: " + str(r.status_code))
-
-    def send_command(self, command, text = ""):
+    def send_command(self, command, text=""):
         """This sends the speech to the effects server for processing"""
         print("Sending command: " + command + ", text: [" + text + "]")
 
-        r = requests.post(self.server + "/command",
+        r = requests.post(server + "/command",
                           json={
                               "command": command,
                               "text": text.lower(),
@@ -112,9 +103,19 @@ class EscapeRoomEyes(object):
 
 
 if __name__ == "__main__":
-    bot = EscapeRoomEyes(sys.argv)
+    if len(sys.argv) > 1:
+        server = sys.argv[1]
+
+    # Initialize and test connection
+    send_face_count(0, 0)
+
+    bot = EscapeRoomEyes()
+
+    d = threading.Thread(name='count_faces', target=count_faces)
+    d.setDaemon(True)
 
     try:
+        d.start()
         bot.start()
     except KeyboardInterrupt:
         # Release when done
