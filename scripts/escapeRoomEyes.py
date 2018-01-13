@@ -92,6 +92,7 @@ class EscapeRoomEyes(object):
             sleep(3)
         else:
             self.send_command(":stopped", "no-audio")
+            sleep(1)
 
     def send_command(self, command, text=""):
         """This sends the speech to the effects server for processing"""

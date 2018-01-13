@@ -46,7 +46,7 @@ func (s *Server) Answer(game *GameState, db *mgo.Session, answer string) {
 		c := getGameCollection(db)
 		c.Update(bson.M{"_id": s.GameID, "questions.question": current.Query}, bson.M{
 			"$set": bson.M{
-				"say": current.Query,
+				"say": "Correct! " + current.Reward,
 				"questions.$": current,
 			},
 		})

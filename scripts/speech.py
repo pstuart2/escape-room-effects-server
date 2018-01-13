@@ -9,8 +9,8 @@ class Speech(object):
         self.r.pause_threshold = 0.8
         self.r.phrase_time_limit = 8
         self.r.operation_timeout = 10
-        self.r.energy_threshold = 4000
-        #self.r.dynamic_energy_threshold = True
+        self.r.energy_threshold = 1500
+        self.r.dynamic_energy_threshold = False
         # self.r.dynamic_energy_adjustment_ratio = 1.25
 
     def google_speech_recognition(self, recognizer, audio):
