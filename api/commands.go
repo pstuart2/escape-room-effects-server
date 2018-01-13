@@ -35,9 +35,6 @@ func (s *Server) Command(ctx echo.Context) error {
 
 	fmt.Printf("Command [%s]\n", r.Command)
 
-	c := getGameCollection(db)
-	c.UpdateId(s.GameID, bson.M{"$push": bson.M{"commandsSent": bson.M{"command": r.Command}}})
-
 	if s.isGamePaused(db) {
 		return ctx.JSON(http.StatusOK, "OK")
 	}
@@ -98,11 +95,15 @@ func getSayText(text string) string {
 }
 
 func processSpokenCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
-	if strings.Contains(r.Command, "your name is") || strings.Contains(r.Command, "you are") {
-		// TODO: These are invalid commands until they have me come out
+	fmt.Printf("Recorded: %s\n", r.Text)
+
+	c := getGameCollection(db)
+	game := s.getGame(db)
+
+	if game.Eyes.State == Found && (strings.Contains(r.Text, "your name is") || strings.Contains(r.Text, "you are")) {
 		return processShutdownCommand(s, ctx, r, db)
-	} else if strings.Contains(r.Command, "do not be afraid") {
-		// TODO: Handle
+	} else if game.Eyes.State != Found && strings.Contains(r.Text, "do not be afraid") {
+		c.UpdateId(s.GameID, bson.M{"$set": bson.M{"eyes": bson.M{"state": 0, "interact": Found}}})
 	} else {
 		fmt.Println("Invalid command")
 	}

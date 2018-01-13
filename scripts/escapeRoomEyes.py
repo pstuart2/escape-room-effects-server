@@ -79,10 +79,10 @@ class EscapeRoomEyes(object):
 
             if speech is not None:
                 self.send_command(":speech", speech)
-                # Sleep so the speech has time to be read on the screen.
-                sleep(10)
             else:
                 self.send_command(":stopped", reason)
+
+            sleep(3)
         else:
             self.send_command(":stopped", "no-audio")
 
@@ -95,18 +95,20 @@ class EscapeRoomEyes(object):
                               "previousCount": previous_count,
                               "currentCount": current_count
                           })
-        print("Status: " + str(r.status_code))
+        if r.status_code != 200:
+            print("send_face_count Status: " + str(r.status_code))
 
     def send_command(self, command, text = ""):
         """This sends the speech to the effects server for processing"""
-        print("Sending command: " + command)
+        print("Sending command: " + command + ", text: [" + text + "]")
 
         r = requests.post(self.server + "/command",
                           json={
                               "command": command,
                               "text": text.lower(),
                           })
-        print("Status: " + str(r.status_code))
+        if r.status_code != 200:
+            print("send_command Status: " + str(r.status_code))
 
 
 if __name__ == "__main__":
