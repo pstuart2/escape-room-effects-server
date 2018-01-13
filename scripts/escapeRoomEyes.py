@@ -86,10 +86,11 @@ class EscapeRoomEyes(object):
 
             if speech is not None:
                 self.send_command(":speech", speech)
+                sleep(5)
             else:
                 self.send_command(":stopped", reason)
+                sleep(1)
 
-            sleep(3)
         else:
             self.send_command(":stopped", "no-audio")
             sleep(1)
