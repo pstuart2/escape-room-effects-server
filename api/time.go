@@ -8,6 +8,7 @@ import (
 	"math"
 	"time"
 	"escape-room-effects-server/piClient"
+	"escape-room-effects-server/sound"
 )
 
 type TimeRequest struct {
@@ -54,18 +55,19 @@ func clockPosToMinute(pos int) int {
 	return int(math.Ceil(float64(float64(pos) * 2.5)))
 }
 
-func isClockSetAheadByNoMoreThan5Min(game *GameState) bool {
+func isClockSetAheadByNoMoreThan5Min(game *GameState) (bool, float64) {
 	gt := game.Time.Current
-	clockTime := time.Date(gt.Year(), gt.Month(), gt.Day(), game.Time.Clock.Hour, game.Time.Clock.Min, gt.Second(), gt.Nanosecond(), time.Local)
+	clockTime := time.Date(gt.Year(), gt.Month(), gt.Day(), game.Time.Clock.Hour, game.Time.Clock.Min, 0, gt.Nanosecond(), time.Local)
 
 	diff := clockTime.Sub(gt)
 	minutes := diff.Minutes()
+	seconds := diff.Seconds()
 
 	if minutes > 5 || minutes <= 0 {
-		return false
+		return false, seconds
 	}
 
-	return true
+	return true, seconds
 }
 
 func (s *Server) StartTicker() {
@@ -82,11 +84,17 @@ func (s *Server) StartTicker() {
 			game := s.getGame(db)
 
 			// Check clock against time
-			if isClockSetAheadByNoMoreThan5Min(game) {
+			isAhead, seconds := isClockSetAheadByNoMoreThan5Min(game)
+			if isAhead {
 				if lightsOn != 1 {
 					fmt.Println("Time good, turning lights on")
 					piClient.GameRoomLightsOnly()
 					lightsOn = 1
+				} else {
+					fmt.Printf("Seconds: %f\n", seconds)
+					if seconds == 9 {
+						sound.Play(sound.AliceIntro)
+					}
 				}
 			} else if lightsOn != 0 {
 				fmt.Println("Time fail, turning lights off")

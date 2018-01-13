@@ -14,11 +14,13 @@ const (
 	BunnyGrowl        = "./sounds/bunny-growl.wav"
 	ChainDoorShut     = "./sounds/chain-door-shut.wav"
 	ChainDrag         = "./sounds/chain-drag.wav"
-	CreeperExplosion  = "./sounds/creeper-explosion.wav"
 	DoorSlam          = "./sounds/door-slam.wav"
-	EnderDeath        = "./sounds/ender-death-1.wav"
-	Explosion         = "./sounds/explosion.wav"
 	MusicLoop         = "./sounds/short-12second-music-loop.wav"
+	Wonderland         = "./sounds/wonderland.wav"
+	AliceIntro         = "./sounds/alice-intro.wav"
+	CatScream         = "./sounds/cat-scream.wav"
+	Psycholand         = "./sounds/psycholand.wav"
+
 	RandomDoorSlam    = "./sounds/random-door-slam.wav"
 	UndergroundEffect = "./sounds/underground-sound-effect.wav"
 
@@ -48,7 +50,7 @@ func Play(sound string) {
 	<-done
 }
 
-var effects = []string{BunnyGrowl, ChainDrag, CreeperExplosion, EnderDeath, Explosion, RandomDoorSlam, MusicLoop, UndergroundEffect}
+var effects = []string{BunnyGrowl, ChainDrag, RandomDoorSlam, MusicLoop, UndergroundEffect}
 
 func StartRandomEffects() chan bool {
 	stop := make(chan bool)

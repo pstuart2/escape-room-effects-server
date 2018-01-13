@@ -58,11 +58,11 @@ func process(s *Server, r *GameStateRequest, db *mgo.Session) {
 		{
 			s.GameID = r.ID
 
-			piClient.LightsOff()
+			piClient.WallLightsOnly()
 			go func() {
-				//sound.Play(sound.LightToggle)
 				sound.Play(sound.DoorSlam)
 				sound.Play(sound.ChainDoorShut)
+				sound.Play(sound.Wonderland)
 			}()
 		}
 
@@ -71,12 +71,6 @@ func process(s *Server, r *GameStateRequest, db *mgo.Session) {
 			s.StartTicker()
 			piClient.LightsOff()
 			startRandomEffects()
-			go func() {
-				sound.Play(sound.MusicLoop)
-				sound.Play(sound.MusicLoop)
-				sound.Play(sound.MusicLoop)
-				sound.Play(sound.UndergroundEffect)
-			}()
 		}
 
 	case "pause":
