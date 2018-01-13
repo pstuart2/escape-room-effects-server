@@ -40,6 +40,8 @@ func (s *Server) GameState(ctx echo.Context) error {
 }
 
 func process(s *Server, r *GameStateRequest, db *mgo.Session) {
+	fmt.Printf("Set State: %s", r.State)
+
 	switch r.State {
 	case "setGameId":
 		{
@@ -49,7 +51,6 @@ func process(s *Server, r *GameStateRequest, db *mgo.Session) {
 	case "starting":
 		{
 			s.GameID = r.ID
-			s.StartTicker()
 
 			piClient.LightsOff()
 			go func() {
@@ -61,7 +62,8 @@ func process(s *Server, r *GameStateRequest, db *mgo.Session) {
 
 	case "start":
 		{
-			piClient.WallLightsOnly()
+			s.StartTicker()
+			piClient.LightsOff()
 			startRandomEffects()
 			go func() {
 				sound.Play(sound.MusicLoop)

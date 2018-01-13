@@ -30,7 +30,7 @@ class EscapeRoomEyes(object):
         self.send_face_count(self.lastCount, 0)
 
         while True:
-            print("-----------------------------------")
+            #print("-----------------------------------")
             # Capture frame-by-frame
             ret, frame = cap.read()
 

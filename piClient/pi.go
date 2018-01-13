@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	PiServer = "http://192.168.86.123:8080"
+	PiServer = "http://192.168.86.101:8080"
 )
 
 /*

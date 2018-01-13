@@ -8,6 +8,7 @@ import (
 	"math"
 	"time"
 	"gopkg.in/mgo.v2"
+	"escape-room-effects-server/piClient"
 )
 
 type TimeRequest struct {
@@ -72,6 +73,7 @@ func isClockSetAheadByNoMoreThan5Min(s *Server, db *mgo.Session) bool {
 
 func (s *Server) StartTicker() {
 	s.Ticker = time.NewTicker(time.Second * 1)
+	fmt.Println("Ticker starting!")
 
 	go func() {
 		db := s.getDb()
@@ -86,10 +88,12 @@ func (s *Server) StartTicker() {
 			if isClockSetAheadByNoMoreThan5Min(s, db) {
 				if lightsOn != 1 {
 					fmt.Println("Time good, turning lights on")
+					piClient.GameRoomLightsOnly()
 					lightsOn = 1
 				}
 			} else if lightsOn != 0 {
 				fmt.Println("Time fail, turning lights off")
+				piClient.LightsOff()
 				lightsOn = 0
 			}
 		}
