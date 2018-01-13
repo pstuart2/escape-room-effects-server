@@ -7,7 +7,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"math"
 	"time"
-	"gopkg.in/mgo.v2"
 	"escape-room-effects-server/piClient"
 )
 
@@ -55,9 +54,7 @@ func clockPosToMinute(pos int) int {
 	return int(math.Ceil(float64(float64(pos) * 2.5)))
 }
 
-func isClockSetAheadByNoMoreThan5Min(s *Server, db *mgo.Session) bool {
-	game := s.getGame(db)
-
+func isClockSetAheadByNoMoreThan5Min(game *GameState) bool {
 	gt := game.Time.Current
 	clockTime := time.Date(gt.Year(), gt.Month(), gt.Day(), game.Time.Clock.Hour, game.Time.Clock.Min, gt.Second(), gt.Nanosecond(), time.Local)
 
@@ -79,13 +76,13 @@ func (s *Server) StartTicker() {
 		db := s.getDb()
 		defer db.Close()
 
-		lightsOn := -1  // Not yet set
-
-		// TODO: Setup pi Zero for the lights server
+		lightsOn := -1 // Not yet set
 
 		for range s.Ticker.C {
+			game := s.getGame(db)
+
 			// Check clock against time
-			if isClockSetAheadByNoMoreThan5Min(s, db) {
+			if isClockSetAheadByNoMoreThan5Min(game) {
 				if lightsOn != 1 {
 					fmt.Println("Time good, turning lights on")
 					piClient.GameRoomLightsOnly()
@@ -95,6 +92,15 @@ func (s *Server) StartTicker() {
 				fmt.Println("Time fail, turning lights off")
 				piClient.LightsOff()
 				lightsOn = 0
+			}
+
+			if lightsOn == 0 && game.Eyes.Interact == Found {
+				fmt.Println("Afraid of the dark!")
+				c := getGameCollection(db)
+				c.UpdateId(s.GameID, bson.M{"$set": bson.M{"eyes.interact": AfraidOfDark, "say": "I'm afraid of the dark."}})
+			} else if lightsOn == 1 && game.Eyes.Interact == AfraidOfDark {
+				c := getGameCollection(db)
+				c.UpdateId(s.GameID, bson.M{"$set": bson.M{"eyes": bson.M{"interact": Found, "state": 0}, "say": "I'm glad it's not dark."}})
 			}
 		}
 	}()

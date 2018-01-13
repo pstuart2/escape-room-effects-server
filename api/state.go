@@ -47,6 +47,12 @@ func process(s *Server, r *GameStateRequest, db *mgo.Session) {
 		{
 			s.GameID = r.ID
 			fmt.Printf("GameId set to: %s\n", s.GameID)
+			game := s.getGame(db)
+
+			if game.State == Running {
+				s.StartTicker()
+				startRandomEffects()
+			}
 		}
 	case "starting":
 		{

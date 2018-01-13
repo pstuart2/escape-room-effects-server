@@ -23,25 +23,29 @@ def count_faces():
     while True:
         ret, frame = cap.read()
 
-        # Our operations on the frame come here
-        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        if ret:
+            # Our operations on the frame come here
+            gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-        # Find the faces in our image
-        faces = frontal_face.detectMultiScale(gray,
-                                              scaleFactor=1.5,
-                                              minNeighbors=5,
-                                              minSize=(30, 30)
-                                              )
+            # Find the faces in our image
+            faces = frontal_face.detectMultiScale(gray,
+                                                  scaleFactor=1.5,
+                                                  minNeighbors=5,
+                                                  minSize=(30, 30)
+                                                  )
 
-        face_count = len(faces)
+            face_count = len(faces)
 
-        if face_count != last_count:
-            print('Faces:: last: ' + str(last_count) + ' current: ' + str(face_count))
-            try:
-                send_face_count(face_count, last_count)
-                last_count = face_count
-            except:
-                print("Failed to send!")
+            if face_count != last_count:
+                print('Faces:: last: ' + str(last_count) + ' current: ' + str(face_count))
+                try:
+                    send_face_count(face_count, last_count)
+                    last_count = face_count
+                except:
+                    print("Failed to send!")
+        else:
+            print("Failed to capture. Sleep")
+            sleep(0.5)
 
 
 def send_face_count(current_count, previous_count):

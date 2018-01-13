@@ -17,6 +17,7 @@ const (
 	Waiting = 1
 	Peeking = 2
 	Found   = 3
+	AfraidOfDark= 4
 )
 
 func (s *Server) Faces(ctx echo.Context) error {
@@ -30,7 +31,7 @@ func (s *Server) Faces(ctx echo.Context) error {
 
 	game := s.getGame(db)
 
-	if game.Eyes.Interact != Found {
+	if game.Eyes.Interact < Found {
 		c := getGameCollection(db)
 
 		if r.CurrentCount == 0 && game.Eyes.Interact == Hiding {

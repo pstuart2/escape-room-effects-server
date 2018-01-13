@@ -100,9 +100,9 @@ func processSpokenCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mg
 	c := getGameCollection(db)
 	game := s.getGame(db)
 
-	if game.Eyes.State == Found && (strings.Contains(r.Text, "your name is") || strings.Contains(r.Text, "you are")) {
+	if game.Eyes.Interact == Found && (strings.Contains(r.Text, "your name is") || strings.Contains(r.Text, "you are")) {
 		return processShutdownCommand(s, ctx, r, db)
-	} else if game.Eyes.State != Found && strings.Contains(r.Text, "do not be afraid") {
+	} else if game.Eyes.Interact != Found && (strings.Contains(r.Text, "do not be afraid") || strings.Contains(r.Text, "don't be afraid")) {
 		c.UpdateId(s.GameID, bson.M{"$set": bson.M{"eyes": bson.M{"state": 0, "interact": Found}}})
 	} else {
 		fmt.Println("Invalid command")
@@ -114,7 +114,7 @@ func processSpokenCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mg
 func processShutdownCommand(s *Server, ctx echo.Context, r *CommandRequest, db *mgo.Session) error {
 	shutdownCode := s.getShutdownCode(db)
 
-	if strings.Contains(r.Command, shutdownCode) {
+	if strings.Contains(r.Text, shutdownCode) {
 		s.finishGame(db)
 	} else {
 		playWrongAnswerSound()
